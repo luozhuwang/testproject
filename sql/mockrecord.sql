@@ -1,0 +1,3 @@
+INSERT INTO `mockrecord` VALUES (1, '172.20.17.75', 1008, '测试get接口', 'get', '/getUser', '', '', '测试get接口', 200, NULL, '', '{\"text\" : \"success\"}', 1, '2018-7-13 14:30:21', '2018-7-13 14:30:21');
+INSERT INTO `mockrecord` VALUES (3, NULL, 1008, '测试post', 'POST', '/postUsers', NULL, '{\"username\":\"foo\", \"password\":\"bar\"}', '测试post接口', 200, NULL, NULL, '{ \"apply_id\": \"000001\", \"overdued\": \"Y\" }', 0, '2018-6-13 16:20:34', '2018-6-13 16:20:34');
+INSERT INTO `mockrecord` VALUES (4, NULL, NULL, 'hello-get接口', 'get', '/hello', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2018-6-26 18:00:59', '2018-6-26 18:00:59');

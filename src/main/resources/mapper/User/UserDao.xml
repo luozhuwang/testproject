@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sy.dao.UserDao">
+	<!-- 目的：为DAO接口方法提供sql语句配置 -->
+	<resultMap id="UserInfoMap" type="com.sy.entity.UserInfo">  		
+  		<result property="id" column="id"/>
+  		<result property="user_code" column="user_code"/>
+  		<result property="user_name" column="user_name"/>
+  		<result property="user_ip" column="user_ip"/>
+  		<result property="user_pwd" column="user_pwd"/>
+  		<result property="email" column="email"/>
+  		<result property="createtime" column="createtime"/>
+	</resultMap>
+	<!-- 查询用户和密码进行登录 -->
+	<select id="findByUsername" parameterType="String" resultMap="UserInfoMap" >	
+		select a.* from publish_user a where user_code = #{0} and user_pwd=#{1}		
+	</select>
+	
+	<insert id="registeredUser" parameterType="String">
+		insert into publish_user(user_code,user_pwd,user_name,user_ip,email) values(#{user_code},#{user_pwd},#{user_name},#{user_ip},#{email})
+	</insert>
+	
+</mapper>	

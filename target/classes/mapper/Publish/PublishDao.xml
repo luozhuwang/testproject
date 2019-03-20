@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sy.dao.PublishDao">
+	
+	<resultMap id="UserInfoMap" type="UserInfo">  		
+  		<result property="id" column="id"/>
+  		<result property="user_code" column="user_code"/>
+  		<result property="user_name" column="user_name"/>
+  		<result property="user_ip" column="user_ip"/>
+  		<result property="email" column="email"/>
+  		<result property="createtime" column="createtime"/>
+	</resultMap>
+
+	<resultMap id="PublishInfoMap" type="PublishInfo">  
+		<result property="user_code" column="user_code"/>
+		<result property="server_list" column="server_list"/>		
+  		<result property="deliver_list" column="deliver_list"/>
+  		<result property="online_date" column="online_date"/>
+  		<result property="deliver_match" column="deliver_match"/>
+  		<result property="deliver_type" column="deliver_type"/>
+  		<result property="user_name" column="user_name"/>
+  		<result property="status" column="status"/>
+  		<result property="updatetime" column="updatetime"/>
+  		<result property="createtime" column="createtime"/>
+  		<result property="operate" column="operate"/>
+  		<result property="test_env" column="test_env"/>
+	</resultMap>
+	
+	
+	<sql id="query_items_where">
+        <if test="deliver_list != null and deliver_list !=''">  
+            and  a.deliver_list like  CONCAT('%',#{deliver_list},'%') 
+        </if> 
+		<if test="online_date != null and online_date !=''">  
+<!--             and  a.online_date  = #{online_date} -->
+				 and  a.online_date  like  CONCAT('%',#{online_date},'%') 
+        </if>  
+        <if test="deliver_match != null and deliver_match !=''">  
+            and  a.deliver_match  like CONCAT('%',#{deliver_match},'%') 
+        </if>
+        <if test="status != null and status !=''">  
+            and  a.status  = #{status}
+        </if>
+   </sql>
+   
+	<insert id="insertPublish">	    
+	    insert into jenkins_record (user_code,deliver_list,server_list,online_date,deliver_match,deliver_type,status)
+	    values
+	    (#{user_code},#{deliver_list},#{server_list},#{online_date},#{deliver_match},#{deliver_type},#{status})	
+	</insert>
+	
+	<insert id="insertDeploy">	    
+	    insert into deploy_record (user_code,deliver_list,server_list,online_date)
+	    values
+	    (#{user_code},#{deliver_list},#{server_list},#{online_date})	
+	</insert>
+	
+	<insert id="insertlog">	    
+	    insert into operator_record (content,user_ip,operate)
+	    values
+	    (#{content},#{user_ip},#{operate})	
+	</insert>
+	
+	<select id="getPublishInfo" parameterType="PublishInfo" resultMap="PublishInfoMap" >
+		select a.deliver_list,a.online_date,a.deliver_match,a.deliver_type,b.user_name,a.`status`,a.createtime from jenkins_record a left join publish_user b on a.user_code=b.user_code
+		<where>
+            <include refid="query_items_where"></include>
+        </where>
+        order by a.createtime desc
+	</select>
+	
+	<select id="getOperatorRecord" parameterType="String" resultMap="PublishInfoMap" >
+		select c.deliver_list,c.online_date,b.user_name,a.operate,a.createtime from operator_record  a LEFT JOIN publish_user b on a.user_ip=b.user_ip LEFT JOIN jenkins_record  c on a.content=c.deliver_list
+		<where>
+		  	c.deliver_list=#{deliver_list}
+        </where>
+	</select>
+	
+	<select id="getDeployInfo" parameterType="PublishInfo" resultMap="PublishInfoMap" >
+		select b.user_name,a.deliver_list,c.test_env,a.online_date,a.createtime from deploy_record a LEFT JOIN publish_user b on a.user_code=b.user_code LEFT JOIN server_info c on a.server_list=c.server_list 		
+		<where>
+            <include refid="query_items_where"></include>
+        </where>
+         ORDER BY a.createtime desc
+	</select>
+	
+	<!-- 程序中待验证collection 和 collectionBymatch 是否返回同一数据 -->
+<!-- 	<select id="collection" parameterType="String" resultMap="PublishInfoMap" >	 -->
+<!-- 		select a.* from   jenkins_record  a where a.deliver_list in  -->
+<!-- 			(select MAX(t.deliver_list) from jenkins_record t where t.online_date=#{0}   and t.deliver_type=#{1}  and t.`status` in (#{2},#{3}) GROUP BY t.deliver_match) order by deliver_list  -->
+<!-- 	</select> -->
+	
+	<select id="collectionBymatch" parameterType="String" resultMap="PublishInfoMap" >	
+		select t.user_code,max(deliver_list) as deliver_list,t.online_date,t.deliver_match,t.deliver_type,t.`status`,t.createtime,t.updatetime   from jenkins_record t
+		<where>
+			t.online_date like  CONCAT('%',#{0},'%') and t.deliver_type=#{1} and  t.`status` in (#{2},#{3}) 
+		</where>
+		group BY t.deliver_match
+		order by t.deliver_match asc
+	</select>
+	
+	<!-- 获取部署服务 -->
+	<select id="getDeliverlist" parameterType="String" resultMap="PublishInfoMap" >
+		select a.* from jenkins_record a
+		<where>
+			 a.online_date like  CONCAT('%',#{0},'%')   and a.deliver_match=#{1} and a.status ="publish"
+		</where>
+		order by deliver_list desc
+	</select>
+	
+	<!-- 通过IP获取用户名和邮箱 -->
+	<select id="getUserInfo" parameterType="String" resultMap="UserInfoMap" >
+		select a.* from publish_user a
+		<where>
+			 a.user_ip=#{user_ip}
+		</where>
+	</select>
+	<update id="updateDeliverStatus" parameterType="String">
+		update jenkins_record t set t.`status`='publish',t.updatetime =NOW() 
+		<where>
+			t.deliver_list=#{deliver_list}
+		</where>
+	</update>
+	<update id="updateDeliverInfo"  parameterType="PublishInfo" >
+		update jenkins_record t set t.user_code=#{user_code},t.server_list=#{server_list},t.`status`=#{status}, t.updatetime=NOW()
+		<where>
+			t.deliver_list=#{deliver_list}
+		</where>
+	</update>
+</mapper>	

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sy.dao.MockDao">
+
+	<sql id="query_items_where">
+	        <if test="name != null and name !=''">  
+	            and  a.name like  CONCAT('%',#{name},'%') 
+	        </if> 			
+    </sql>
+	
+	<select id="getMockRecord" parameterType="String" resultType="com.sy.entity.MockInfo" >
+		select a.* from mockrecord a
+		<where>
+            <include refid="query_items_where"></include>
+      	</where>
+	</select>
+	
+	<select id="getRecordById" parameterType="String" resultType="com.sy.entity.MockInfo" >
+		select a.* from mockrecord a
+		where a.id=#{id}
+	</select>
+	
+	<update id="updateStatus" >
+		update mockrecord set status=#{status} where id=#{id}
+	</update>
+	
+
+</mapper>	
